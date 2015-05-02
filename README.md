@@ -30,19 +30,19 @@ This is a driver for LG Smart TVs, allowing them to be used as part of Ninja Sph
 
 * Go 1.3
 
-### Building
+### Building < now optional >
 
 This project can be built with the debug.sh script, you will need to create the /data/sphere/user-autostart/drivers/driver-lg-tv/  folder, and make sure the compiled driver and the json file are put in it once you finish compiling.
 
 ### Installing
 
-As config is not yet enabled in the sphere-ui the driver will need installing twice. The first time you install, it is necessary to have the LG TV turned on , and able to access the same network as the ninjasphere. Compile the driver and put it onto the ninjasphere, the driver will make the TV pop up a six digit Pin. Make a not of the pin, then edit line 16 of driver.go
-
-var mydefaultpin =   <add your pin as a 6 digit integer here>
-
-After that is done , recompile the driver, and re upload it to the spehere, it should now be possible to add the TV to the sphere app, and the access it from the spheramid.
-
-
+* Create a new folder on your ninjasphere /data/sphere/user-autostart/drivers/driver-lg-tv   
+* Add the driver-lg-tv and the package.json . 
+* Make sure your TV is tuned on 
+* Reboot the the spehere and got to http://ninjasphere.local  
+* Click on the LG TVs button, then click New TV
+* A pin number should appear on the TV screen
+* Add the pin and a TV name to the config page and click save.
 
 ### More Information
 
