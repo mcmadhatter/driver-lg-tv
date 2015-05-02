@@ -17,7 +17,7 @@ func newDevice(driver ninja.Driver, conn *ninja.Connection, cfg *TVConfig) (*Dev
 
 	player, err := devices.CreateMediaPlayerDevice(driver, &model.Device{
 		NaturalID:     cfg.ID,
-		NaturalIDType: "samsung-tv",
+		NaturalIDType: "lg-tv",
 		Name:          &cfg.Name,
 		Signatures: &map[string]string{
 			"ninja:manufacturer": "LG",

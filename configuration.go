@@ -12,6 +12,15 @@ type configService struct {
 	driver *Driver
 }
 
+func (c *configService) GetActions(request *model.ConfigurationRequest) (*[]suit.ReplyAction, error) {
+	return &[]suit.ReplyAction{
+		suit.ReplyAction{
+			Name:  "",
+			Label: "LG TVs",
+		},
+	}, nil
+}
+
 func (c *configService) Configure(request *model.ConfigurationRequest) (*suit.ConfigurationScreen, error) {
 	log.Infof("Incoming configuration request. Action:%s Data:%s", request.Action, string(request.Data))
 
@@ -24,18 +33,10 @@ func (c *configService) Configure(request *model.ConfigurationRequest) (*suit.Co
 		}
 		fallthrough
 	case "new":
-		return c.edit(TVConfig{})
-	case "edit":
+		t := TVConfig{}
 
-		var vals map[string]string
-		json.Unmarshal(request.Data, &vals)
-		config := c.driver.config.get(vals["tv"])
-
-		if config == nil {
-			return c.error(fmt.Sprintf("Could not find tv with id: %s", vals["tv"]))
-		}
-
-		return c.edit(*config)
+		t.IP = c.driver.requestPinShow()
+		return c.edit(t)
 	case "delete":
 
 		var vals map[string]string
@@ -54,7 +55,7 @@ func (c *configService) Configure(request *model.ConfigurationRequest) (*suit.Co
 		if err != nil {
 			return c.error(fmt.Sprintf("Failed to unmarshal save config request %s: %s", request.Data, err))
 		}
-
+		cfg.IP = c.driver.requestPinShow()
 		err = c.driver.saveTV(cfg)
 
 		if err != nil {
@@ -110,10 +111,6 @@ func (c *configService) list() (*suit.ConfigurationScreen, error) {
 						Name:    "tv",
 						Options: tvs,
 						PrimaryAction: &suit.ReplyAction{
-							Name:        "edit",
-							DisplayIcon: "pencil",
-						},
-						SecondaryAction: &suit.ReplyAction{
 							Name:         "delete",
 							Label:        "Delete",
 							DisplayIcon:  "trash",
@@ -142,9 +139,6 @@ func (c *configService) list() (*suit.ConfigurationScreen, error) {
 func (c *configService) edit(config TVConfig) (*suit.ConfigurationScreen, error) {
 
 	title := "New LG TV"
-	if config.ID != "" {
-		title = "LG TV"
-	}
 
 	screen := suit.ConfigurationScreen{
 		Title: title,
@@ -161,10 +155,11 @@ func (c *configService) edit(config TVConfig) (*suit.ConfigurationScreen, error)
 						Placeholder: "My TV",
 						Value:       config.Name,
 					},
+
 					suit.InputText{
 						Name:        "pin",
 						Before:      "Pin",
-						Placeholder: "Pin",
+						Placeholder: "Pin Number",
 						Value:       config.Pin,
 					},
 				},

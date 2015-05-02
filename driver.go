@@ -10,10 +10,11 @@ import (
 	"github.com/mcmadhatter/go-lg-tv"
 	"github.com/ninjasphere/go-ninja/api"
 	"github.com/ninjasphere/go-ninja/logger"
+	"github.com/ninjasphere/go-ninja/model"
 	"github.com/ninjasphere/go-ninja/support"
 )
 
-var mydefaultpin = 987654 /* chnage this to the pin that gets shown on you screen the first time the driver is run */
+var mydefaultpin = 123456 /* chnage this to the pin that gets shown on you screen the first time the driver is run */
 
 var info = ninja.LoadModuleInfo("./package.json")
 var log = logger.GetLogger(info.Name)
@@ -43,7 +44,7 @@ type TVConfig struct {
 	Name  string
 	IP    net.IP
 	Found bool
-	Pin   int
+	Pin   string
 }
 
 func NewDriver() (*Driver, error) {
@@ -79,23 +80,29 @@ func (d *Driver) deleteTV(id string) error {
 	return err
 }
 
-func (d *Driver) saveTV(tv TVConfig) error {
+func (d *Driver) saveTV(tvcfg TVConfig) error {
 
-	existing := d.config.get(tv.ID)
+	existing := d.config.get(tvcfg.ID)
 
 	if existing != nil {
-		existing.Pin = tv.Pin
-		existing.Name = tv.Name
-		existing.ID = tv.Name + strconv.Itoa(tv.Pin)
+		existing.Pin = tvcfg.Pin
+		existing.Name = tvcfg.Name
+		existing.IP = tvcfg.IP
+		existing.ID = tvcfg.Name + tvcfg.Pin
 	} else {
-		tv.ID = tv.Name + strconv.Itoa(tv.Pin)
-		tv.Pin = tv.Pin
-		tv.Name = tv.Name
-		d.config.TVs[tv.ID] = &tv
-		fmt.Println("Save Config")
+		tvcfg.ID = tvcfg.Name + tvcfg.Pin
+		d.config.TVs[tvcfg.ID] = &tvcfg
 
-		go d.createTVDevice(&tv)
+		go d.createTVDevice(&tvcfg)
 	}
+
+	tv := lgtv.TV{}
+	tv.Id = tvcfg.ID
+	tv.Ip = tvcfg.IP
+	tv.Name = tvcfg.Name
+	tv.Pin = tvcfg.Pin
+	fmt.Print("Save Config - ID:%s IP:%s\n", tv.Id, tvcfg.IP.String())
+	tv.PairWithPin()
 
 	return d.SendEvent("config", d.config)
 }
@@ -103,6 +110,10 @@ func (d *Driver) saveTV(tv TVConfig) error {
 func (d *Driver) Start(config *Config) error {
 
 	fmt.Println("Driver Starting with config %+v", config)
+
+	d.Conn.MustExportService(&configService{d}, "$driver/"+info.ID+"/configure", &model.ServiceAnnouncement{
+		Schema: "/protocol/configuration",
+	})
 
 	if config.TVs == nil {
 		config.TVs = make(map[string]*TVConfig)
@@ -117,9 +128,9 @@ func (d *Driver) Start(config *Config) error {
 		tvcfg.Name = tv.Name
 		tvcfg.IP = tv.Ip
 		tvcfg.Found = true
-		tvcfg.Pin = mydefaultpin
+		tvcfg.Pin = strconv.Itoa(mydefaultpin)
 
-		tvcfg.ID = tv.Name + strconv.Itoa(tvcfg.Pin)
+		tvcfg.ID = tv.Name + tvcfg.Pin
 
 		config.TVs[tvcfg.ID] = &tvcfg
 
@@ -136,12 +147,15 @@ func (d *Driver) Start(config *Config) error {
 		d.createTVDevice(cfg)
 
 	}
-	/*  Config export not currently working in sphere-ui
-	d.Conn.MustExportService(&configService{d}, "$driver/"+info.ID+"/configure", &model.ServiceAnnouncement{
-		Schema: "/protocol/configuration",
-	})
-	*/
+
 	return nil
+}
+
+func (d *Driver) requestPinShow() net.IP {
+	tv := lgtv.TV{}
+	tv.GetTVToShowPin()
+	return tv.Ip
+
 }
 
 func (d *Driver) createTVDevice(cfg *TVConfig) {

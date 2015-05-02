@@ -2,7 +2,7 @@
   "id": "mcmadhatter.lg.tv",
   "name": "LG TV Driver",
   "version": "0.2.0",
-  "description": "Control of Samsung Smart TVs using IP",
+  "description": "Control of LG Smart TVs using IP",
   "main": "driver-lg-tv",
   "author": "jmg123 a.k.a github.com/mcmadhatter",
   "license": "MIT",
