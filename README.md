@@ -37,7 +37,7 @@ This project can be built with the debug.sh script, you will need to create the 
 ### Installing
 
 * Create a new folder on your ninjasphere /data/sphere/user-autostart/drivers/driver-lg-tv   
-* Add the driver-lg-tv and the package.json . 
+* Add the driver-lg-tv and the package.json from github to this folder . 
 * Make sure your TV is tuned on 
 * Reboot the the spehere and got to http://ninjasphere.local  
 * Click on the LG TVs button, then click New TV
